@@ -43,6 +43,17 @@ export enum EStatusPaymentOrder {
   NO_PAY = 0,
 }
 
+export enum ETypeService {
+  ROOM_SERVICE = 'ROOM_SERVICE',
+  OTHER_SERVICE = 'OTHER_SERVICE',
+}
+
+export enum EStatusBookingRoom {
+  CHUA_NHAN_PHONG = 'CHUA_NHAN_PHONG',
+  DA_NHAN_PHONG = 'DA_NHAN_PHONG',
+  DA_TRA_PHONG = 'DA_TRA_PHONG',
+}
+
 export const formatNumberMoney = (value: number | string) => {
   let valueNumber = value;
   if (typeof value !== 'string') {
