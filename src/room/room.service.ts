@@ -2,12 +2,20 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { RoomRepository } from './repository/room.repository';
 import { CCreateRoomDto } from './dto/CreateRoom.dto';
 import { ObjectId } from 'mongodb';
-import { QuerySearchRoomDto } from './dto/QuerySearchRoom.dto';
+import {
+  FindEmptyRoomDto,
+  QuerySearchRoomDto,
+} from './dto/QuerySearchRoom.dto';
 import { UpdateRoomDto } from './dto/UpdateRoom.dto';
+import { BookingRepository } from 'src/booking/repository/booking.repository';
+import { EStatusBookingRoom } from 'src/common/common';
 
 @Injectable()
 export class RoomService {
-  constructor(private readonly roomRepository: RoomRepository) {}
+  constructor(
+    private readonly roomRepository: RoomRepository,
+    private readonly bookingRepository: BookingRepository,
+  ) {}
 
   async createRoom(body: CCreateRoomDto) {
     try {
@@ -74,6 +82,233 @@ export class RoomService {
     };
   }
 
+  async findEmptyRoom(query: FindEmptyRoomDto) {
+    const {
+      page = 1,
+      limit = 10,
+      type_search,
+      checkInDate,
+      checkOutDate,
+      countNight,
+      adult,
+      children,
+      sort,
+      sort_value,
+    } = query;
+
+    const skip = Number(limit) * Number(page) - Number(limit);
+    let countRecord = 0;
+    let result: any = null;
+
+    if (type_search === 'booking') {
+      let querySearch = [];
+      let sortQuery = {updatedAt: -1};
+
+      if (checkInDate) {
+        querySearch.push({
+          checkInDay: {
+            $gte: new Date(checkInDate),
+          },
+        });
+      }
+
+      if (checkOutDate) {
+        querySearch.push({
+          checkOutDay: {
+            $lte: new Date(checkOutDate),
+          },
+        });
+      }
+
+      if (countNight) {
+        querySearch.push({
+          countNight,
+        });
+      }
+
+      if (adult) {
+        querySearch.push({
+          'AmountPeople.Adult': adult,
+        });
+      }
+
+      if (children) {
+        querySearch.push({
+          'AmountPeople.children': children,
+        });
+      }
+
+      if (sort === 'prices' && sort_value) {
+        sortQuery = {...sortQuery,...{prices: Number(sort_value)} };
+      }
+
+      if (sort === 'typeRoom' && sort_value) {
+        querySearch.push({
+          typeRoom: sort_value,
+        });
+      }
+
+      result = await this.bookingRepository.getByCondition(
+        querySearch.length > 0
+          ? {
+              $and: querySearch,
+            }
+          : {},
+        'room',
+        { skip, limit, sort: { ...sortQuery } },
+        [
+          {
+            path: 'room',
+            model: 'Room',
+            populate: [
+              {
+                path: 'service',
+                model: 'Service',
+              },
+              {
+                path: 'typeRoom',
+                model: 'TypeRoom',
+              },
+            ],
+          },
+        ],
+      );
+
+      countRecord = await this.bookingRepository.countDocuments(querySearch);
+    } else {
+      if (sort === 'prices' && sort_value) {
+        result = await this.roomRepository.getByCondition(
+          {},
+          undefined,
+          { skip, limit, sort: { prices: Number(sort_value)  } },
+          [
+            {
+              path: 'service',
+              model: 'Service',
+            },
+            {
+              path: 'OutstandingService',
+              model: 'Service',
+            },
+            {
+              path: 'typeRoom',
+              model: 'TypeRoom',
+            },
+          ],
+        );
+
+        countRecord = await this.roomRepository.countDocuments({});
+      } else if (sort === 'typeRoom' && sort_value) {
+        result = await this.roomRepository.getByCondition(
+          { typeRoom: sort_value },
+          undefined,
+          { skip, limit, sort: { updatedAt: -1 } },
+          [
+            {
+              path: 'service',
+              model: 'Service',
+            },
+            {
+              path: 'OutstandingService',
+              model: 'Service',
+            },
+            {
+              path: 'typeRoom',
+              model: 'TypeRoom',
+            },
+          ],
+        );
+
+        countRecord = await this.roomRepository.countDocuments({});
+      } else {
+        result = await this.roomRepository.getByCondition(
+          {},
+          undefined,
+          { skip, limit, sort: { updatedAt: -1 } },
+          [
+            {
+              path: 'service',
+              model: 'Service',
+            },
+            {
+              path: 'OutstandingService',
+              model: 'Service',
+            },
+            {
+              path: 'typeRoom',
+              model: 'TypeRoom',
+            },
+          ],
+        );
+
+        countRecord = await this.roomRepository.countDocuments({});
+      }
+    }
+
+    return {
+      data: result,
+      page,
+      count: Math.ceil(countRecord / limit),
+    };
+  }
+
+  async checkEmptyRoom(body: any){
+    const {id,checkInDate,checkOutDate} = body;
+
+    const resRoom = await this.roomRepository.findById(id);
+    if(resRoom?.quantity > 0){
+      return{
+        status: HttpStatus.OK,
+        data: 'Vẫn còn phòng trống'
+      }
+    }
+
+    const resBooking = await this.bookingRepository.findByCondition({
+      $and: [
+        {
+          room: id
+        },
+        {
+          $or: [
+            {
+              checkOutDay: {
+                $lt: new Date(checkInDate),
+              },
+            },
+            {
+              checkInDay: {
+                $gt: new Date(checkOutDate),
+              },
+            },
+          ]
+        },
+        {
+          status: EStatusBookingRoom.DA_NHAN_PHONG
+        }
+      ],
+    });
+
+    if(resBooking){
+      return{
+        status: HttpStatus.OK,
+        data: 'Vẫn còn phòng trống'
+      }
+    }
+
+    return{
+      status: HttpStatus.NOT_FOUND,
+      data: 'Đã hết phòng'
+    }
+
+  }
+
+  async getRandomListRoom(size: string) {
+    const res = await this.roomRepository.getRandom(size);
+    return {
+      data: res,
+    };
+  }
+
   async updateRoom(data: UpdateRoomDto) {
     const { id, ...updateDtoData } = data;
 
@@ -98,7 +333,26 @@ export class RoomService {
   }
 
   async getDetailRoom(id: string) {
-    return await this.roomRepository.findById(id);
+    const objectID = new ObjectId(id);
+    return await this.roomRepository.findByCondition(
+      { _id: objectID },
+      undefined,
+      undefined,
+      [
+        {
+          path: 'service',
+          model: 'Service',
+        },
+        {
+          path: 'typeRoom',
+          model: 'TypeRoom',
+        },
+        {
+          path: 'OutstandingService',
+          model: 'Service',
+        },
+      ],
+    );
   }
 
   async deleteRoom(id: string) {

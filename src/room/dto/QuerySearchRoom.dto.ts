@@ -19,3 +19,43 @@ export class QuerySearchRoomDto {
   @IsString()
   typeRoom: string;
 }
+
+export class FindEmptyRoomDto {
+  @IsOptional()
+  page: number;
+
+  @IsOptional()
+  limit: number;
+
+  @IsOptional()
+  @IsString()
+  sort: string;
+
+  @IsOptional()
+  @IsString()
+  type_search: string;
+
+  @IsOptional()
+  @IsString()
+  sort_value: string;
+
+  @IsOptional()
+  @IsString()
+  checkInDate: string;
+
+  @IsOptional()
+  @IsString()
+  checkOutDate: string;
+
+  @IsOptional()
+  @IsString()
+  countNight: number;
+
+  @IsOptional()
+  @IsString()
+  adult: number;
+
+  @IsOptional()
+  @IsString()
+  children: number;
+}

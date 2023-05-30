@@ -11,6 +11,8 @@ import { roomSchema } from './models/room.model';
 import { RoomRepository } from './repository/room.repository';
 import { AuthMiddleware } from 'src/middleware/auth.middleware';
 import { JwtService } from '@nestjs/jwt';
+import { bookingSchema } from 'src/booking/models/booking.model';
+import { BookingRepository } from 'src/booking/repository/booking.repository';
 
 @Module({
   imports: [
@@ -19,9 +21,13 @@ import { JwtService } from '@nestjs/jwt';
         name: 'Room',
         schema: roomSchema,
       },
+      {
+        name: 'Booking',
+        schema: bookingSchema,
+      },
     ]),
   ],
-  providers: [RoomService, RoomRepository, JwtService],
+  providers: [RoomService, RoomRepository, JwtService, BookingRepository],
   controllers: [RoomController],
 })
 export class RoomModule implements NestModule {

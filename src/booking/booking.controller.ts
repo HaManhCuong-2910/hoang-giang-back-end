@@ -19,6 +19,7 @@ import { roles } from 'src/common/common';
 import { BookingService } from './booking.service';
 import { CCreateBookingDto } from './dto/CreateBooking.dto';
 import { CQuerySearchBookingDto } from './dto/QuerySearchBooking';
+import { UpdateBookingDto } from './dto/UpdateBooking';
 
 @ApiTags('booking')
 @Controller('booking')
@@ -38,5 +39,10 @@ export class BookingController {
   @Post('/create')
   async createBooking(@Body() body: CCreateBookingDto) {
     return await this.BookingService.createBooking(body);
+  }
+
+  @Put('/update')
+  async updateBooking(@Body() body: UpdateBookingDto) {
+    return await this.BookingService.updateBooking(body);
   }
 }

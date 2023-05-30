@@ -59,6 +59,6 @@ export interface Room extends Document {
   title: string;
   descriptions: string;
   typeRoom: string;
-  quantity: Number;
+  quantity: number;
   endow: string;
 }

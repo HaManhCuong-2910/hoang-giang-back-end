@@ -4,6 +4,7 @@ import { BookingRepository } from './repository/booking.repository';
 import { ObjectId } from 'mongodb';
 import { CQuerySearchBookingDto } from './dto/QuerySearchBooking';
 import * as moment from 'moment';
+import { UpdateBookingDto } from './dto/UpdateBooking';
 
 @Injectable()
 export class BookingService {
@@ -143,6 +144,29 @@ export class BookingService {
     } catch (error) {
       throw new HttpException('Không thành công', HttpStatus.BAD_REQUEST);
     }
+  }
+
+  async updateBooking (body: UpdateBookingDto){
+    const { id, ...updateDtoData } = body;
+
+    const updateDataResponse = await this.bookingRepository
+      .findByIdAndUpdate(id, {
+        ...updateDtoData,
+      })
+      .then((res) => {
+        return {
+          status: HttpStatus.OK,
+          data: res,
+        };
+      })
+      .catch((error) => {
+        return {
+          status: HttpStatus.BAD_REQUEST,
+          data: error,
+        };
+      });
+
+    return updateDataResponse;
   }
 
   async GetDetailBooking(id: string) {

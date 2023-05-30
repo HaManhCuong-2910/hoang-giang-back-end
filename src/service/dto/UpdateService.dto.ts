@@ -21,6 +21,10 @@ export class UpdateServiceDto {
   image: string;
 
   @IsOptional()
+  @IsString()
+  description: string;
+
+  @IsOptional()
   @IsEnum(ETypeService)
   typeService: ETypeService;
 

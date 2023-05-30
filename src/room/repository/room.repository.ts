@@ -17,4 +17,10 @@ export class RoomRepository extends BaseRepository<Room> {
   async countDocuments(filter) {
     return this.roomModel.countDocuments(filter);
   }
+
+  async getRandom(size: string){
+    return this.roomModel.aggregate(
+      [ { $sample: { size: Number(size) } } ]
+  )
+  }
 }

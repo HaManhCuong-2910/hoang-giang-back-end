@@ -11,7 +11,7 @@ import {
 import { ApiTags } from '@nestjs/swagger';
 import { RoomService } from './room.service';
 import { CCreateRoomDto } from './dto/CreateRoom.dto';
-import { QuerySearchRoomDto } from './dto/QuerySearchRoom.dto';
+import { FindEmptyRoomDto, QuerySearchRoomDto } from './dto/QuerySearchRoom.dto';
 import { UpdateRoomDto } from './dto/UpdateRoom.dto';
 
 @ApiTags('room')
@@ -27,6 +27,21 @@ export class RoomController {
   @Get('/list')
   async getListRoom(@Query() query: QuerySearchRoomDto) {
     return await this.roomService.getListRoom(query);
+  }
+
+  @Get('/empty-room')
+  async findEmptyRoom(@Query() query: FindEmptyRoomDto) {
+    return await this.roomService.findEmptyRoom(query);
+  }
+
+  @Post('/check-empty-room')
+  async checkEmptyRoom(@Body() body: any) {
+    return await this.roomService.checkEmptyRoom(body);
+  }
+
+  @Get('/random-list')
+  async getRandomListRoom(@Query('size') size: string) {
+    return await this.roomService.getRandomListRoom(size);
   }
 
   @Put('/update')

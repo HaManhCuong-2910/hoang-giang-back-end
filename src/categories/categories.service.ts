@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { TypeRoomRepository } from './repository/typeRooms.repository';
 import { CreateTypeRoomDto } from './dto/CreateTypeRoom.dto';
+import { UpdateTypeRoomDto } from './dto/UpdateTypeRoom.dto';
 
 @Injectable()
 export class CategoriesService {
@@ -16,6 +17,29 @@ export class CategoriesService {
     } catch (error) {
       throw new HttpException('Không thành công', HttpStatus.BAD_REQUEST);
     }
+  }
+
+  async updateTypeRoom(body: UpdateTypeRoomDto){
+    const { id, ...updateDtoData } = body;
+
+    const updateDataResponse = await this.typeRoomRepository
+      .findByIdAndUpdate(id, {
+        ...updateDtoData,
+      })
+      .then((res) => {
+        return {
+          success: HttpStatus.OK,
+          data: res,
+        };
+      })
+      .catch((error) => {
+        return {
+          success: HttpStatus.BAD_REQUEST,
+          data: error,
+        };
+      });
+
+    return updateDataResponse;
   }
 
   async getListTypeRoom(query: { name: string; page: number; limit: number }) {

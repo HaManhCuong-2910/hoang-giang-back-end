@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose';
+import { ETypeService } from 'src/common/common';
 
 const serviceSchema = new Schema(
   {
@@ -16,6 +17,10 @@ const serviceSchema = new Schema(
       type: String,
       require: true,
       default: 'ROOM_SERVICE',
+    },
+    description: {
+      type: String,
+      default: '',
     },
     price: {
       type: Number,
@@ -35,4 +40,7 @@ export { serviceSchema };
 export interface Service extends Document {
   name: string;
   image: string;
+  typeService: ETypeService;
+  price: number;
+  description: string;
 }

@@ -16,6 +16,10 @@ export class ServiceCreateDto {
   @IsString()
   image: string;
 
+  @IsOptional()
+  @IsString()
+  description: string;
+
   @IsNotEmpty()
   @IsEnum(ETypeService)
   typeService: ETypeService;
