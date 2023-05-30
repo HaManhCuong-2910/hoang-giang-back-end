@@ -78,6 +78,10 @@ const bookingSchema = new Schema(
       require: true,
       default: EStatusBookingRoom.CHUA_NHAN_PHONG,
     },
+    hangPhong: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,
@@ -102,4 +106,5 @@ export interface Booking extends Document {
   prices: number;
   statusPayment: EStatusPaymentOrder;
   status: EStatusBookingRoom;
+  hangPhong: string;
 }

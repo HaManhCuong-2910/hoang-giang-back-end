@@ -5,10 +5,15 @@ import { ObjectId } from 'mongodb';
 import { CQuerySearchBookingDto } from './dto/QuerySearchBooking';
 import * as moment from 'moment';
 import { UpdateBookingDto } from './dto/UpdateBooking';
+import { RoomRepository } from 'src/room/repository/room.repository';
+import { EStatusBookingRoom } from 'src/common/common';
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly bookingRepository: BookingRepository) {}
+  constructor(
+    private readonly bookingRepository: BookingRepository,
+    private readonly roomRepository: RoomRepository,
+  ) {}
 
   async GetListBooking(query: CQuerySearchBookingDto) {
     const {
@@ -131,27 +136,42 @@ export class BookingService {
       const newCheckInDay = new Date(checkInDay);
       const newCheckOutDay = new Date(checkOutDay);
       const objectID = new ObjectId(room);
-      const res = await this.bookingRepository.create({
-        ...filterData,
-        room: objectID,
-        checkInDay: newCheckInDay,
-        checkOutDay: newCheckOutDay,
-      });
-      return {
-        status: HttpStatus.OK,
-        data: res,
-      };
+
+      const valid = await this.roomRepository.verifyQuantityRoom(body);
+      if (valid.status === HttpStatus.BAD_REQUEST) {
+        throw new HttpException(valid.message, HttpStatus.BAD_REQUEST);
+      }
+
+      if (valid.status === HttpStatus.OK) {
+        const res = await this.bookingRepository.create({
+          ...filterData,
+          room: objectID,
+          checkInDay: newCheckInDay,
+          checkOutDay: newCheckOutDay,
+        });
+        await this.roomRepository.handleBooking(body);
+        return {
+          status: HttpStatus.OK,
+          data: res,
+        };
+      }
     } catch (error) {
       throw new HttpException('Không thành công', HttpStatus.BAD_REQUEST);
     }
   }
 
-  async updateBooking (body: UpdateBookingDto){
-    const { id, ...updateDtoData } = body;
+  async updateBooking(body: UpdateBookingDto) {
+    const { id, status, ...updateDtoData } = body;
+    let queryStatus = {};
+    if (status === EStatusBookingRoom.DA_TRA_PHONG) {
+      await this.roomRepository.handleReRoom(id);
+      queryStatus = { status };
+    }
 
     const updateDataResponse = await this.bookingRepository
       .findByIdAndUpdate(id, {
         ...updateDtoData,
+        ...queryStatus,
       })
       .then((res) => {
         return {

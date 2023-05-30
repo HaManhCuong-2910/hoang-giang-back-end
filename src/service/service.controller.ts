@@ -21,7 +21,7 @@ export class ServiceController {
   }
 
   @Get('/list')
-  async getListService(@Body() query: QueryServiceDto) {
+  async getListService(@Query() query: QueryServiceDto) {
     return await this.serviceService.getListService(query);
   }
 }

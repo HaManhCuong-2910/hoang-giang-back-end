@@ -74,4 +74,8 @@ export class CCreateBookingDto {
   @IsString()
   @IsEnum(EStatusBookingRoom)
   status: EStatusBookingRoom;
+
+  @IsOptional()
+  @IsString()
+  hangPhong: string;
 }

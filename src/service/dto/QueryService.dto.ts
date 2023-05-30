@@ -7,6 +7,10 @@ export class QueryServiceDto {
 
   @IsOptional()
   @IsString()
+  typeService: string;
+
+  @IsOptional()
+  @IsString()
   page: number;
 
   @IsOptional()

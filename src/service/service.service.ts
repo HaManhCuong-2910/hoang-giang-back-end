@@ -44,7 +44,7 @@ export class ServiceService {
   }
 
   async getListService(query: QueryServiceDto) {
-    const { page = 1, limit = 10, name } = query;
+    const { page = 1, limit = 10, name, ...filterSearch } = query;
 
     const skip = Number(limit) * Number(page) - Number(limit);
 
@@ -53,6 +53,11 @@ export class ServiceService {
     if (name) {
       querySearch['name'] = { $regex: '.*' + name + '.*', $options: 'i' };
     }
+
+    querySearch = {
+      ...querySearch,
+      ...filterSearch,
+    };
 
     const countRecord = await this.serviceRepository.countDocuments(
       querySearch,
