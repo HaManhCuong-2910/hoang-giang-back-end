@@ -52,6 +52,7 @@ export enum EStatusBookingRoom {
   CHUA_NHAN_PHONG = 'CHUA_NHAN_PHONG',
   DA_NHAN_PHONG = 'DA_NHAN_PHONG',
   DA_TRA_PHONG = 'DA_TRA_PHONG',
+  HUY_DAT = 'HUY_DAT',
 }
 
 export const formatNumberMoney = (value: number | string) => {
