@@ -271,7 +271,10 @@ export class BookingService {
   async updateBooking(body: UpdateBookingDto) {
     const { id, status, ...updateDtoData } = body;
     let queryStatus = {};
-    if (status === EStatusBookingRoom.DA_TRA_PHONG) {
+    if (
+      status === EStatusBookingRoom.DA_TRA_PHONG ||
+      status === EStatusBookingRoom.HUY_DAT
+    ) {
       await this.roomRepository.handleReRoom(id);
       queryStatus = { status };
     }
