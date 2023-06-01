@@ -4,6 +4,6 @@ export type TAmountPeople = {
 };
 
 export type TServiceBooking = {
-  id: string;
+  id: any;
   countPeople: number;
 };

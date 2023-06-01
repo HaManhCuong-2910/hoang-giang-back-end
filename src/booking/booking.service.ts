@@ -1,4 +1,9 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 import { CCreateBookingDto } from './dto/CreateBooking.dto';
 import { BookingRepository } from './repository/booking.repository';
 import { ObjectId } from 'mongodb';
@@ -6,13 +11,15 @@ import { CQuerySearchBookingDto } from './dto/QuerySearchBooking';
 import * as moment from 'moment';
 import { UpdateBookingDto } from './dto/UpdateBooking';
 import { RoomRepository } from 'src/room/repository/room.repository';
-import { EStatusBookingRoom } from 'src/common/common';
+import { EStatusBookingRoom, formatNumberMoney } from 'src/common/common';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class BookingService {
   constructor(
     private readonly bookingRepository: BookingRepository,
     private readonly roomRepository: RoomRepository,
+    private readonly mailerService: MailerService,
   ) {}
 
   async GetListBooking(query: CQuerySearchBookingDto) {
@@ -150,6 +157,107 @@ export class BookingService {
           checkOutDay: newCheckOutDay,
         });
         await this.roomRepository.handleBooking(body);
+        const objectIDDetail = new ObjectId(res._id);
+        const resultDetail = await this.bookingRepository.findByCondition(
+          { _id: objectIDDetail },
+          undefined,
+          undefined,
+          [
+            {
+              path: 'room',
+              model: 'Room',
+              populate: [
+                {
+                  path: 'service',
+                  model: 'Service',
+                },
+                {
+                  path: 'typeRoom',
+                  model: 'TypeRoom',
+                },
+              ],
+            },
+            {
+              path: 'service.id',
+              model: 'Service',
+            },
+          ],
+        );
+        const listService =
+          resultDetail.service.length > 0
+            ? resultDetail.service.map((item) => item.id.name)
+            : [];
+        this.mailerService
+          .sendMail({
+            to: body.email,
+            from: process.env.MAIL_SERVICE_USER,
+            subject: `Đặt phòng thành công`,
+            html: `<!DOCTYPE html>
+            <html lang="en">
+              <head>
+                <style>
+                  li {
+                    margin: 15px 0px;
+                  }
+                </style>
+              </head>
+              <body>
+                <p>Xin chào, <b>${body.name}</b></p>
+                <p>Cảm ơn bạn đã đặt phòng tại Hoàng Giang Hotel</p>
+                <p>Thông tin đặt phòng</p>
+                <ul>
+                  <li><b>Họ và tên:</b> <span>${resultDetail.name}</span></li>
+                  <li><b>Số điện thoại:</b> <span>${
+                    resultDetail.phoneNumber
+                  }</span></li>
+                  <li><b>Email:</b> <span>${resultDetail.email}</span></li>
+                  <li>
+                    <b>Ngày nhận phòng:</b>
+                    <span
+                      >${moment(resultDetail.checkInDay).format(
+                        'DD/MM/YYYY HH:mm',
+                      )}</span
+                    >
+                  </li>
+                  <li>
+                    <b>Ngày trả phòng:</b>
+                    <span
+                      >${moment(resultDetail.checkOutDay).format(
+                        'DD/MM/YYYY HH:mm',
+                      )}</span
+                    >
+                  </li>
+                  <li>
+                    <b>Dịch vụ:</b>
+                    <span>${
+                      listService.length > 0 ? listService.join(', ') : ''
+                    }</span>
+                  </li>
+                  <li><b>Phòng:</b> <span>${resultDetail.room.title}</span></li>
+                  <li><b>Hạng phòng:</b> <span>${
+                    resultDetail.hangPhong
+                  }</span></li>
+                  <li><b>Số đêm:</b> <span>${
+                    resultDetail.nightCount
+                  }</span></li>
+                  <li><b>Người lớn:</b> <span>${
+                    resultDetail.AmountPeople.Adult
+                  }</span></li>
+                  <li><b>Trẻ em:</b> <span>${
+                    resultDetail.AmountPeople.children
+                  }</span></li>
+                </ul>
+                <p><b>Tổng giá:</b> ${formatNumberMoney(
+                  resultDetail.prices,
+                )} VNĐ/Đêm</p>
+              </body>
+            </html>
+            `,
+          })
+          .catch((err) => {
+            console.log('err', err);
+            throw new BadRequestException();
+          });
         return {
           status: HttpStatus.OK,
           data: res,

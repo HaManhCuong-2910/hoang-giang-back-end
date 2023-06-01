@@ -99,7 +99,7 @@ export interface Booking extends Document {
   service: TServiceBooking[];
   checkInDay: string;
   checkOutDay: string;
-  room: string;
+  room: any;
   nightCount: number;
   AmountPeople: TAmountPeople;
   note: string;
